@@ -1,0 +1,636 @@
+<title>오늘도 굽습니다</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+  /* ── 팔레트: 불판 열기(앰버) + 소주 그린 ── */
+  :root{
+    --bg:#FBF6EF; --surface:#FFFFFF; --surface-2:#F4EADD; --surface-3:#EFE2D0;
+    --ink:#2B2119; --ink-soft:#6E6053; --ink-faint:#A2937F;
+    --line:#E6D8C6; --line-strong:#D9C7B0;
+    --ember:#DD551C; --ember-soft:#F6CBA9; --ember-ink:#8A3411;
+    --soju:#2E9E6B; --soju-soft:#C7E9D7;
+    --good:#2E9E6B; --warn:#D99411; --bad:#CE3F27;
+    --shadow:0 1px 2px rgba(43,33,25,.06), 0 6px 22px rgba(43,33,25,.08);
+    --shadow-lift:0 2px 6px rgba(43,33,25,.10), 0 14px 40px rgba(43,33,25,.16);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#1A1611; --surface:#241E17; --surface-2:#2C251C; --surface-3:#352C21;
+      --ink:#F4EADC; --ink-soft:#BCAB95; --ink-faint:#8A7A65;
+      --line:#3B3226; --line-strong:#4A3F30;
+      --ember:#FF7A3C; --ember-soft:#5C3620; --ember-ink:#FFC7A0;
+      --soju:#48C88B; --soju-soft:#234634;
+      --good:#48C88B; --warn:#E7AE3C; --bad:#E8664C;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 22px rgba(0,0,0,.4);
+      --shadow-lift:0 2px 6px rgba(0,0,0,.35), 0 14px 40px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1A1611; --surface:#241E17; --surface-2:#2C251C; --surface-3:#352C21;
+    --ink:#F4EADC; --ink-soft:#BCAB95; --ink-faint:#8A7A65;
+    --line:#3B3226; --line-strong:#4A3F30;
+    --ember:#FF7A3C; --ember-soft:#5C3620; --ember-ink:#FFC7A0;
+    --soju:#48C88B; --soju-soft:#234634;
+    --good:#48C88B; --warn:#E7AE3C; --bad:#E8664C;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 22px rgba(0,0,0,.4);
+    --shadow-lift:0 2px 6px rgba(0,0,0,.35), 0 14px 40px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Noto Sans KR",system-ui,sans-serif;
+    line-height:1.5; margin:0;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:20px 18px 64px}
+
+  /* ── 헤더 ── */
+  header.top{
+    display:flex; flex-wrap:wrap; align-items:flex-end; gap:14px 24px;
+    padding:8px 0 18px; border-bottom:2px solid var(--line); margin-bottom:22px;
+  }
+  .brand{display:flex; flex-direction:column; gap:2px; margin-right:auto}
+  .brand .eyebrow{
+    font-size:12px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--ember); font-weight:700;
+  }
+  h1{
+    font-family:"Gaegu",cursive; font-weight:700;
+    font-size:clamp(30px,5vw,46px); line-height:1; margin:0;
+    letter-spacing:.01em;
+  }
+  .stat{display:flex; flex-direction:column; align-items:flex-end; gap:1px}
+  .stat .k{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); font-weight:700}
+  .stat .v{font-size:24px; font-weight:900; font-variant-numeric:tabular-nums; line-height:1.1}
+  .stat .v.score{color:var(--ember)}
+  .theme-btn{
+    border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink-soft);
+    border-radius:999px; width:38px; height:38px; cursor:pointer; font-size:16px;
+    display:grid; place-items:center; align-self:center;
+  }
+  .theme-btn:hover{border-color:var(--ember); color:var(--ember)}
+
+  .layout{display:grid; grid-template-columns:1fr; gap:22px}
+  @media (min-width:900px){ .layout{grid-template-columns:1.15fr .85fr} }
+
+  section.panel{
+    background:var(--surface); border:1.5px solid var(--line);
+    border-radius:16px; padding:18px; box-shadow:var(--shadow);
+  }
+  .panel > h2{
+    font-family:"Gaegu",cursive; font-size:23px; margin:0 0 4px;
+    display:flex; align-items:center; gap:9px;
+  }
+  .panel > .sub{font-size:12.5px; color:var(--ink-soft); margin:0 0 15px}
+
+  /* ── 상사 카드 ── */
+  .bosses{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+  .boss{
+    position:relative; background:var(--surface-2); border:1.5px solid var(--line);
+    border-radius:14px; padding:13px 13px 14px; display:flex; flex-direction:column; gap:9px;
+    transition:border-color .2s, transform .12s;
+  }
+  .boss.turn-active{outline:2px solid var(--ember); outline-offset:1px}
+  .boss .rank{
+    position:absolute; top:-9px; left:12px; font-size:10.5px; font-weight:800;
+    letter-spacing:.08em; background:var(--ember); color:#fff; padding:2px 8px; border-radius:999px;
+  }
+  .boss .face{font-size:38px; line-height:1; filter:saturate(1.05)}
+  .boss .who{display:flex; align-items:baseline; gap:7px; flex-wrap:wrap}
+  .boss .name{font-weight:900; font-size:16px}
+  .boss .role{font-size:11px; color:var(--ink-faint); font-weight:600}
+  .boss .say{
+    font-family:"Gaegu",cursive; font-size:15.5px; line-height:1.25; min-height:38px;
+    color:var(--ink-soft); background:var(--surface); border:1.5px dashed var(--line-strong);
+    border-radius:10px; padding:7px 9px;
+  }
+  .boss .say b{color:var(--ember-ink); font-weight:700}
+  .meter{display:flex; flex-direction:column; gap:4px}
+  .meter .row{display:flex; align-items:center; gap:7px; font-size:11px; font-weight:700; color:var(--ink-soft)}
+  .meter .lab{width:34px; flex:none; letter-spacing:.02em}
+  .bar{flex:1; height:9px; background:var(--surface-3); border-radius:999px; overflow:hidden}
+  .bar > i{display:block; height:100%; border-radius:999px; transition:width .35s ease, background .35s}
+  .meter .num{width:26px; text-align:right; font-variant-numeric:tabular-nums; color:var(--ink-faint)}
+  .boss .acts{display:flex; gap:7px; margin-top:1px}
+  .boss .acts button{flex:1}
+
+  /* ── 버튼 ── */
+  button{font-family:inherit}
+  .btn{
+    border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink);
+    border-radius:10px; padding:8px 10px; font-size:13px; font-weight:700; cursor:pointer;
+    transition:transform .1s, background .15s, border-color .15s;
+  }
+  .btn:hover{border-color:var(--ember)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--ember); border-color:var(--ember); color:#fff}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.soju{color:var(--soju); border-color:var(--soju-soft)}
+  .btn.soju:hover{border-color:var(--soju); background:var(--soju-soft)}
+  .btn:disabled{opacity:.4; cursor:not-allowed}
+  .btn:focus-visible, .seg button:focus-visible, .theme-btn:focus-visible{outline:2px solid var(--ember); outline-offset:2px}
+
+  /* ── 쌈 조립 ── */
+  .builder .ing{margin-bottom:11px}
+  .builder .ing:last-of-type{margin-bottom:0}
+  .ing .head{display:flex; align-items:center; gap:7px; margin-bottom:5px}
+  .ing .emoji{font-size:15px}
+  .ing .title{font-weight:700; font-size:13px}
+  .ing .hint{font-size:11px; color:var(--ink-faint); margin-left:auto}
+  .seg{display:flex; gap:5px; flex-wrap:wrap}
+  .seg button{
+    border:1.5px solid var(--line); background:var(--surface-2); color:var(--ink-soft);
+    border-radius:8px; padding:5px 11px; font-size:12.5px; font-weight:600; cursor:pointer;
+    transition:all .12s;
+  }
+  .seg button:hover{border-color:var(--line-strong)}
+  .seg button[aria-pressed="true"]{background:var(--ember); border-color:var(--ember); color:#fff; font-weight:700}
+
+  .plate{
+    margin-top:14px; padding:12px 13px; border-radius:12px;
+    background:linear-gradient(160deg,var(--surface-2),var(--surface-3));
+    border:1.5px solid var(--line-strong);
+  }
+  .plate .cap{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); font-weight:700}
+  .plate .now{font-family:"Gaegu",cursive; font-size:17px; line-height:1.35; margin-top:2px}
+  .plate .who-to{font-size:12px; color:var(--ink-soft); margin-top:7px}
+  .plate .who-to b{color:var(--ember-ink)}
+
+  /* ── 로그 ── */
+  .log{display:flex; flex-direction:column; gap:8px; max-height:238px; overflow-y:auto; padding-right:2px}
+  .log .item{
+    display:flex; gap:10px; align-items:flex-start; font-size:13px;
+    background:var(--surface-2); border:1.5px solid var(--line); border-radius:11px; padding:9px 11px;
+  }
+  .log .badge{
+    flex:none; font-weight:900; font-variant-numeric:tabular-nums; font-size:13px;
+    padding:2px 8px; border-radius:999px; min-width:44px; text-align:center;
+  }
+  .log .txt{color:var(--ink-soft); line-height:1.35}
+  .log .txt b{color:var(--ink); font-weight:700}
+  .log .empty{color:var(--ink-faint); font-size:12.5px; text-align:center; padding:22px 0}
+
+  /* ── 결과 모달 ── */
+  .scrim{
+    position:fixed; inset:0; background:rgba(20,14,8,.55); backdrop-filter:blur(3px);
+    display:grid; place-items:center; padding:20px; z-index:20;
+  }
+  .card-end{
+    background:var(--surface); border:1.5px solid var(--line-strong); border-radius:20px;
+    box-shadow:var(--shadow-lift); padding:30px 28px; max-width:420px; width:100%; text-align:center;
+  }
+  .card-end .grade{font-family:"Gaegu",cursive; font-size:92px; line-height:.9; color:var(--ember)}
+  .card-end .title{font-family:"Gaegu",cursive; font-size:26px; margin:4px 0 2px}
+  .card-end .desc{color:var(--ink-soft); font-size:14px; margin-bottom:18px}
+  .card-end .final{
+    display:flex; justify-content:center; gap:26px; margin-bottom:22px;
+    padding:14px 0; border-top:1.5px solid var(--line); border-bottom:1.5px solid var(--line);
+  }
+  .card-end .final div{display:flex; flex-direction:column; gap:1px}
+  .card-end .final .k{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); font-weight:700}
+  .card-end .final .v{font-size:26px; font-weight:900; font-variant-numeric:tabular-nums}
+
+  .footnote{margin-top:26px; font-size:12px; color:var(--ink-faint); text-align:center; line-height:1.6}
+  [hidden]{display:none!important}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">회식 서바이벌 · 프로토타입</span>
+      <h1>오늘도 굽습니다 🔥</h1>
+    </div>
+    <div class="stat"><span class="k">남은 턴</span><span class="v" id="turns">12</span></div>
+    <div class="stat"><span class="k">누적 점수</span><span class="v score" id="score">0</span></div>
+    <button class="theme-btn" id="themeBtn" title="라이트/다크 전환" aria-label="테마 전환">◐</button>
+  </header>
+
+  <div class="layout">
+    <div style="display:flex; flex-direction:column; gap:22px">
+      <!-- 상사 테이블 -->
+      <section class="panel">
+        <h2>🍻 상사 테이블</h2>
+        <p class="sub">서열대로 대접하세요. 지금 만든 쌈은 <b>[쌈 대접]</b>으로, 술은 <b>[술 한잔]</b>으로 드립니다.</p>
+        <div class="bosses" id="bosses"></div>
+      </section>
+
+      <!-- 반응 로그 -->
+      <section class="panel">
+        <h2>💬 상사 반응</h2>
+        <p class="sub">표정과 한마디로 취향의 방향을 흘립니다. 단서를 모아 눈치껏 정답에 좁혀 가세요.</p>
+        <div class="log" id="log"><div class="empty">아직 아무도 대접받지 않았습니다.</div></div>
+      </section>
+    </div>
+
+    <!-- 쌈 조립 -->
+    <section class="panel builder">
+      <h2>🥬 쌈 조립대</h2>
+      <p class="sub">재료를 골라 쌈을 만든 뒤, 왼쪽 상사에게 대접하세요.</p>
+      <div id="ingredients"></div>
+      <div class="plate">
+        <div class="cap">지금 만든 쌈</div>
+        <div class="now" id="plateNow">—</div>
+      </div>
+    </section>
+  </div>
+
+  <p class="footnote">
+    로직 프로토타입 — 그래픽은 이후 2.5D 실사 아트로 교체됩니다.<br>
+    상사마다 정답 쌈이 숨어 있고, 정답에 가까울수록 점수가 오릅니다.
+  </p>
+</div>
+
+<div class="scrim" id="endScrim" hidden>
+  <div class="card-end">
+    <div class="grade" id="endGrade">S</div>
+    <div class="title" id="endTitle"></div>
+    <div class="desc" id="endDesc"></div>
+    <div class="final">
+      <div><span class="k">누적 점수</span><span class="v" id="endScore">0</span></div>
+      <div><span class="k">평균 기분</span><span class="v" id="endMood">0</span></div>
+    </div>
+    <button class="btn primary" id="restart" style="width:100%; padding:12px">다시 회식하기</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   데이터: 재료 축과 상사 정의
+   ══════════════════════════════════════════════════════════ */
+
+// 순서형 축 — 값은 0부터 인덱스로 관리한다.
+const AXES = [
+  {key:'lettuce',  label:'상추',   emoji:'🥬', values:['없음','1장','2장']},
+  {key:'perilla',  label:'깻잎',   emoji:'🌿', values:['없음','1장','2장']},
+  {key:'meat',     label:'삼겹살', emoji:'🥓', values:['1개','2개']},
+  {key:'doneness', label:'굽기',   emoji:'🔥', values:['안익음','레어','미디엄','바싹','탐']},
+  {key:'kimchi',   label:'김치',   emoji:'🥟', values:['없음','적당','많이']},
+  {key:'garlic',   label:'마늘',   emoji:'🧄', values:['없음','적당','많이']},
+  {key:'pepper',   label:'고추',   emoji:'🌶️', values:['없음','적당','많이']},
+  {key:'scallion', label:'파채',   emoji:'🧅', values:['없음','적당','많이']},
+];
+// 범주형 축 — 소스는 계열이 있어 부분 점수를 준다.
+const SAUCES = ['쌈장','참소스','소금','안찍음'];
+const SAUCE_GROUP = {'쌈장':'wet','참소스':'wet','소금':'dry','안찍음':'none'};
+function sauceDist(a,b){
+  if(a===b) return 0;
+  const ga=SAUCE_GROUP[a], gb=SAUCE_GROUP[b];
+  if(ga===gb) return .4;                       // 쌈장↔참소스
+  if((ga==='dry'&&gb==='none')||(ga==='none'&&gb==='dry')) return .55; // 소금↔안찍음
+  return 1;                                    // 완전히 다른 계열
+}
+
+// 서열 순서: 배열 앞일수록 높은 서열
+const BOSSES = [
+  {
+    id:'sangmu', name:'오상무', role:'임원 · 서열 1위', face:'🧐',
+    target:{lettuce:1, perilla:0, meat:0, doneness:2, kimchi:0, garlic:0, pepper:0, scallion:1, sauce:'소금'},
+    weights:{lettuce:.5, perilla:.5, meat:.5, doneness:3, kimchi:1, garlic:1, pepper:1, scallion:1, sauce:3},
+    lines:{
+      love:['……(고개를 미세하게 끄덕인다) 담백하군.','군더더기가 없어. 자네 좀 아는군.'],
+      ok:['나쁘지 않아.','음, 먹을 만하네.'],
+      meh:['……좀 많지 않나?','정갈함이 부족해.'],
+      hate:['이런 걸 나한테?','(정색) 자네, 회식이 처음인가?']
+    },
+    mines(s){
+      const msgs=[]; let pts=0;
+      if(s.garlic>0){pts+=25; msgs.push('마늘 냄새를 극도로 싫어한다');}
+      const total=s.lettuce+s.perilla+(s.meat+1)+s.kimchi+s.garlic+s.pepper+s.scallion;
+      if(total>=8){pts+=15; msgs.push('쌈이 너무 크고 복잡하다며 미간을 좁힌다');}
+      return {pts,msgs};
+    }
+  },
+  {
+    id:'bujang', name:'김부장', role:'부장 · 서열 2위', face:'😤',
+    target:{lettuce:2, perilla:1, meat:1, doneness:3, kimchi:2, garlic:2, pepper:1, scallion:1, sauce:'쌈장'},
+    weights:{lettuce:1, perilla:1, meat:1.5, doneness:3, kimchi:2, garlic:3, pepper:1, scallion:1, sauce:1},
+    lines:{
+      love:['크~ 이게 회식이지! 자네 승진각이야!','바싹한 게 아주 그냥! 라떼는 말이야—'],
+      ok:['오, 좀 치는데?','괜찮아 괜찮아, 한 잔 받어.'],
+      meh:['음… 뭔가 부족한데?','자네, 정성이 좀 아쉬워.'],
+      hate:['이게 익은 거야?! 어허!','내 잔이 왜 비어 있어!']
+    },
+    mines(s){
+      const msgs=[]; let pts=0;
+      if(s.doneness<2){pts+=30; msgs.push('덜 익은 고기라며 폭발 직전이다');}
+      return {pts,msgs};
+    }
+  },
+  {
+    id:'chajang', name:'이차장', role:'차장 · 서열 3위', face:'😏',
+    target:{lettuce:1, perilla:2, meat:0, doneness:2, kimchi:1, garlic:1, pepper:0, scallion:2, sauce:'참소스'},
+    weights:{lettuce:1, perilla:3, meat:.5, doneness:1, kimchi:1, garlic:1, pepper:1, scallion:3, sauce:2},
+    lines:{
+      love:['오~ 깻잎에 파채까지, 센스 있네!','내 취향을 어떻게 알았어? 기특한데.'],
+      ok:['음, 담백하니 좋네.','괜찮아, 잘 먹을게.'],
+      meh:['살짝 아쉬운데…','뭔가 하나가 빠진 느낌이야.'],
+      hate:['어우, 이건 좀…','(부장 눈치 보며) 내가 먼저 받아도 되나…']
+    },
+    mines(s){
+      const msgs=[]; let pts=0;
+      if(s.pepper>0){pts+=25; msgs.push('고추만 보면 질색한다');}
+      return {pts,msgs};
+    }
+  },
+  {
+    id:'daeri', name:'박대리', role:'대리 · 서열 4위', face:'🤨',
+    target:{lettuce:2, perilla:0, meat:1, doneness:3, kimchi:2, garlic:1, pepper:2, scallion:2, sauce:'쌈장'},
+    weights:{lettuce:1, perilla:.5, meat:1, doneness:2, kimchi:2, garlic:1, pepper:3, scallion:2, sauce:1},
+    lines:{
+      love:['오 이거지! 매콤하게 잘 아네 ㅎㅎ','캬, 자극적이야. 막내 좀 하는데?'],
+      ok:['ㅇㅋ 먹을 만해.','뭐, 나쁘진 않네.'],
+      meh:['에이, 좀 밍밍한데?','자극이 부족하잖아~'],
+      hate:['이거 안 익었잖아 ㅋㅋ 먹으라고?','풀만 잔뜩… 이게 쌈이야?']
+    },
+    mines(s){
+      const msgs=[]; let pts=0;
+      if(s.doneness<2){pts+=30; msgs.push('안 익은 고기를 극혐한다');}
+      const total=s.lettuce+s.perilla+(s.meat+1)+s.kimchi+s.garlic+s.pepper+s.scallion;
+      if(total<=4){pts+=15; msgs.push('싱거운 쌈이라며 시큰둥하다');}
+      return {pts,msgs};
+    }
+  },
+];
+
+/* ══════════════════════════════════════════════════════════
+   채점: 거리 기반
+   ══════════════════════════════════════════════════════════ */
+function scoreSsam(ssam, boss){
+  let penalty=0, weightSum=0, worst=null, worstErr=-1;
+  for(const ax of AXES){
+    const w=boss.weights[ax.key];
+    const range=ax.values.length-1;
+    weightSum += w*range;
+    const err = Math.abs(ssam[ax.key]-boss.target[ax.key]);
+    const wErr = w*err;
+    penalty += wErr;
+    if(wErr>worstErr){worstErr=wErr; worst={ax, dir:Math.sign(ssam[ax.key]-boss.target[ax.key])};}
+  }
+  // 소스
+  const ws=boss.weights.sauce;
+  weightSum += ws*1;
+  const sErr = ws*sauceDist(ssam.sauce, boss.target.sauce);
+  penalty += sErr;
+  if(sErr>worstErr){worstErr=sErr; worst={ax:{key:'sauce',label:'소스'}, dir:0};}
+
+  const norm = weightSum ? penalty/weightSum : 0;
+  let base = Math.round(100*(1-norm));
+  const mine = boss.mines(ssam);
+  base -= mine.pts;
+  base = Math.max(0, Math.min(100, base));
+  return {score:base, mineMsgs:mine.msgs, worst, hadMine:mine.pts>0};
+}
+
+// 가장 크게 어긋난 축을 상사가 흘리는 힌트로 변환
+function hintFor(worst){
+  if(!worst) return '';
+  const k=worst.ax.key, d=worst.dir;
+  if(k==='doneness') return d>0 ? '너무 익혔다는 눈치다' : '고기가 덜 익었다는 눈치다';
+  if(k==='sauce')    return '소스가 취향과 다르다는 눈치다';
+  if(d>0)  return `${worst.ax.label}이(가) 과하다는 눈치다`;
+  if(d<0)  return `${worst.ax.label}이(가) 부족하다는 눈치다`;
+  return `${worst.ax.label}이(가) 아쉽다는 눈치다`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   상태와 진행
+   ══════════════════════════════════════════════════════════ */
+const MAX_TURNS=12;
+let state;
+function initState(){
+  state={
+    turns:MAX_TURNS, score:0,
+    ssam:{lettuce:0, perilla:0, meat:0, doneness:2, kimchi:0, garlic:0, pepper:0, scallion:0, sauce:'쌈장'},
+    served:new Set(),          // 최초로 대접받은 상사 id
+    mood:{}, soju:{}, log:[],
+  };
+  BOSSES.forEach(b=>{ state.mood[b.id]=50; state.soju[b.id]=70; });
+}
+
+function moodColor(v){ return v>=66?'var(--good)':v>=38?'var(--warn)':'var(--bad)'; }
+function sojuColor(v){ return v>=45?'var(--soju)':v>=20?'var(--warn)':'var(--bad)'; }
+function badgeStyle(delta){
+  if(delta>0) return `background:var(--soju-soft); color:var(--good)`;
+  if(delta<0) return `background:#f7d9d2; color:var(--bad)`;
+  return `background:var(--surface-3); color:var(--ink-soft)`;
+}
+function reactionKey(score){ return score>=88?'love':score>=68?'ok':score>=44?'meh':'hate'; }
+function faceFor(boss, score){
+  if(score==null) return boss.face;
+  return {love:'😍', ok:'🙂', meh:'😒', hate:'😡'}[reactionKey(score)];
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ── 렌더 ── */
+function render(){
+  document.getElementById('turns').textContent=state.turns;
+  document.getElementById('score').textContent=state.score;
+  renderBosses(); renderPlate();
+}
+
+function renderBosses(){
+  const wrap=document.getElementById('bosses'); wrap.innerHTML='';
+  BOSSES.forEach((b,i)=>{
+    const mood=state.mood[b.id], soju=state.soju[b.id];
+    const last=[...state.log].reverse().find(l=>l.boss===b.id);
+    const el=document.createElement('div');
+    el.className='boss';
+    el.innerHTML=`
+      <span class="rank">${i+1}순위</span>
+      <div style="display:flex; gap:11px; align-items:center">
+        <span class="face">${b._face||b.face}</span>
+        <span class="who">
+          <span class="name">${b.name}</span>
+          <span class="role">${b.role}</span>
+        </span>
+      </div>
+      <div class="say">${b._say || '……'}</div>
+      <div class="meter">
+        <div class="row"><span class="lab">기분</span><span class="bar"><i style="width:${mood}%; background:${moodColor(mood)}"></i></span><span class="num">${mood}</span></div>
+        <div class="row"><span class="lab">술잔</span><span class="bar"><i style="width:${soju}%; background:${sojuColor(soju)}"></i></span><span class="num">${soju}</span></div>
+      </div>
+      <div class="acts">
+        <button class="btn primary" data-serve="${b.id}">쌈 대접</button>
+        <button class="btn soju" data-soju="${b.id}">술 한잔</button>
+      </div>`;
+    wrap.appendChild(el);
+  });
+  wrap.querySelectorAll('[data-serve]').forEach(el=>el.onclick=()=>serve(el.dataset.serve));
+  wrap.querySelectorAll('[data-soju]').forEach(el=>el.onclick=()=>pourSoju(el.dataset.soju));
+}
+
+function renderPlate(){
+  const parts=[];
+  for(const ax of AXES){
+    const v=state.ssam[ax.key];
+    if(ax.key==='doneness'){ parts.push(`${ax.values[v]} 삼겹살`); continue; }
+    if(ax.key==='meat') continue; // 개수는 삼겹살 문구에 합침
+    if(v>0) parts.push(`${ax.label} ${ax.values[v]}`);
+  }
+  const meatCount=AXES.find(a=>a.key==='meat').values[state.ssam.meat];
+  const done=AXES.find(a=>a.key==='doneness').values[state.ssam.doneness];
+  const veg=[]; if(state.ssam.lettuce>0) veg.push(`상추 ${AXES[0].values[state.ssam.lettuce]}`);
+  if(state.ssam.perilla>0) veg.push(`깻잎 ${AXES[1].values[state.ssam.perilla]}`);
+  const extras=[];
+  ['kimchi','garlic','pepper','scallion'].forEach(k=>{
+    const ax=AXES.find(a=>a.key===k); const v=state.ssam[k];
+    if(v>0) extras.push(`${ax.label} ${ax.values[v]}`);
+  });
+  const veggie = veg.length? veg.join(' + ') : '야채 없이';
+  const line = `${veggie}에 ${done} 삼겹살 ${meatCount}` +
+               (extras.length? `, ${extras.join(' · ')}` : '') +
+               `, 소스는 ${state.ssam.sauce}.`;
+  document.getElementById('plateNow').textContent=line;
+}
+
+function renderIngredients(){
+  const wrap=document.getElementById('ingredients'); wrap.innerHTML='';
+  for(const ax of AXES){
+    const ing=document.createElement('div'); ing.className='ing';
+    ing.innerHTML=`<div class="head"><span class="emoji">${ax.emoji}</span><span class="title">${ax.label}</span></div>`;
+    const seg=document.createElement('div'); seg.className='seg';
+    ax.values.forEach((val,idx)=>{
+      const b=document.createElement('button');
+      b.textContent=val; b.setAttribute('aria-pressed', state.ssam[ax.key]===idx);
+      b.onclick=()=>{ state.ssam[ax.key]=idx; renderIngredients(); renderPlate(); };
+      seg.appendChild(b);
+    });
+    ing.appendChild(seg); wrap.appendChild(ing);
+  }
+  // 소스
+  const ing=document.createElement('div'); ing.className='ing';
+  ing.innerHTML=`<div class="head"><span class="emoji">🥣</span><span class="title">소스</span></div>`;
+  const seg=document.createElement('div'); seg.className='seg';
+  SAUCES.forEach(val=>{
+    const b=document.createElement('button');
+    b.textContent=val; b.setAttribute('aria-pressed', state.ssam.sauce===val);
+    b.onclick=()=>{ state.ssam.sauce=val; renderIngredients(); renderPlate(); };
+    seg.appendChild(b);
+  });
+  ing.appendChild(seg); wrap.appendChild(ing);
+}
+
+/* ── 행동: 쌈 대접 ── */
+function serve(bossId){
+  if(state.turns<=0) return;
+  const boss=BOSSES.find(b=>b.id===bossId);
+  const idx=BOSSES.indexOf(boss);
+  const res=scoreSsam({...state.ssam}, boss);
+
+  // 서열 눈치: 윗사람이 아직 대접 못 받았는데 아랫사람 먼저 주면 감점
+  let rankDelta=0, rankMsg='';
+  const firstServe=!state.served.has(bossId);
+  if(firstServe){
+    const skipped=BOSSES.slice(0,idx).filter(b=>!state.served.has(b.id));
+    if(skipped.length){ rankDelta=-12; rankMsg=`서열 역전 — ${skipped[skipped.length-1].name}보다 먼저 대접했다`; }
+    else { rankDelta=8; rankMsg='서열대로 대접했다'; }
+  }
+  state.served.add(bossId);
+
+  const moodDelta=Math.round((res.score-55)/4)+Math.round(rankDelta/4);
+  applyMood(boss, moodDelta);
+
+  const total=res.score+rankDelta;
+  state.score+=total;
+
+  // 상사 얼굴/대사 갱신
+  boss._face=faceFor(boss, res.score);
+  boss._say=pick(boss.lines[reactionKey(res.score)]);
+
+  // 로그 구성
+  let detail=`<b>${boss.name}</b> · 쌈 ${res.score}점`;
+  if(rankDelta) detail+= rankDelta>0 ? ` · 서열 +${rankDelta}` : ` · 서열 ${rankDelta}`;
+  const hints=[];
+  if(res.mineMsgs.length) hints.push(res.mineMsgs.join(', '));
+  else if(res.score<88) { const h=hintFor(res.worst); if(h) hints.push(h); }
+  if(rankMsg && rankDelta<0) hints.push(rankMsg);
+  if(hints.length) detail+=`<br><span style="color:var(--ink-faint)">${hints.join(' · ')}</span>`;
+
+  addLog(bossId, total, detail);
+  endTurn();
+}
+
+/* ── 행동: 술 따르기 ── */
+function pourSoju(bossId){
+  if(state.turns<=0) return;
+  const boss=BOSSES.find(b=>b.id===bossId);
+  const was=state.soju[bossId];
+  state.soju[bossId]=100;
+  // 잔이 많이 비었을수록 고마워한다. 부장은 술에 특히 민감.
+  let delta = was<40 ? 6 : 2;
+  if(boss.id==='bujang' && was<40) delta+=6;
+  applyMood(boss, delta);
+  state.score+=delta*2;
+  boss._face='🙂';
+  boss._say = was<40 ? pick(['어이구, 눈치 빠르네!','그래 이거지, 한 잔 받어.'])
+                     : pick(['어, 고마워.','아직 남았는데 뭘.']);
+  addLog(bossId, delta*2, `<b>${boss.name}</b> 잔을 채웠다 · 기분 +${delta}`);
+  endTurn();
+}
+
+function applyMood(boss, delta){
+  state.mood[boss.id]=Math.max(0, Math.min(100, state.mood[boss.id]+delta));
+}
+
+function addLog(bossId, delta, html){
+  state.log.push({boss:bossId, delta, html});
+  const box=document.getElementById('log');
+  const empty=box.querySelector('.empty'); if(empty) empty.remove();
+  const item=document.createElement('div'); item.className='item';
+  const sign=delta>0?'+':'';
+  item.innerHTML=`<span class="badge" style="${badgeStyle(delta)}">${sign}${delta}</span><span class="txt">${html}</span>`;
+  box.prepend(item);
+}
+
+/* ── 턴 종료: 술잔이 마르고, 남은 턴이 준다 ── */
+function endTurn(){
+  state.turns--;
+  // 매 턴 모든 상사의 술잔이 조금씩 줄어든다
+  BOSSES.forEach(b=>{
+    state.soju[b.id]=Math.max(0, state.soju[b.id]-9);
+    if(state.soju[b.id]===0){ applyMood(b, -4); }
+  });
+  render();
+  if(state.turns<=0) finishRound();
+}
+
+/* ── 라운드 종료: 등급 정산 ── */
+const GRADES=[
+  {min:85, g:'S', title:'영혼까지 갈아 넣은 신입', desc:'상사들이 자네 이름을 외웠다. 승진각.'},
+  {min:70, g:'A', title:'믿음직한 사회생활 만렙', desc:'무난하게 눈치를 다 챙겼다. 훌륭해.'},
+  {min:55, g:'B', title:'무난한 회식 생존', desc:'큰 사고 없이 1차를 넘겼다. 선방.'},
+  {min:40, g:'C', title:'가시방석 신입', desc:'분위기가 좀 싸늘했다. 다음엔 눈치를 더.'},
+  {min:0,  g:'F', title:'다음 회식 열외', desc:'부장이 자네를 기억한다… 나쁜 쪽으로.'},
+];
+function finishRound(){
+  const avg=Math.round(BOSSES.reduce((s,b)=>s+state.mood[b.id],0)/BOSSES.length);
+  const gr=GRADES.find(x=>avg>=x.min);
+  document.getElementById('endGrade').textContent=gr.g;
+  document.getElementById('endTitle').textContent=gr.title;
+  document.getElementById('endDesc').textContent=gr.desc;
+  document.getElementById('endScore').textContent=state.score;
+  document.getElementById('endMood').textContent=avg;
+  document.getElementById('endScrim').hidden=false;
+  document.querySelectorAll('[data-serve],[data-soju]').forEach(b=>b.disabled=true);
+}
+
+/* ── 테마 토글 ── */
+document.getElementById('themeBtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const dark=cur ? cur==='dark' : matchMedia('(prefers-color-scheme:dark)').matches;
+  document.documentElement.setAttribute('data-theme', dark?'light':'dark');
+};
+
+/* ── 시작 ── */
+document.getElementById('restart').onclick=()=>{
+  initState(); document.getElementById('endScrim').hidden=true;
+  document.getElementById('log').innerHTML='<div class="empty">아직 아무도 대접받지 않았습니다.</div>';
+  document.querySelectorAll('[data-serve],[data-soju]').forEach(b=>b.disabled=false);
+  renderIngredients(); render();
+};
+initState(); renderIngredients(); render();
+</script>
