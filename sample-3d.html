@@ -1,0 +1,178 @@
+<title>회식 불판 3D 샘플</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<style>
+  :root{ --ink:#2B2119; --ink-soft:#6E6053; --bg:#0f0b08; --card:rgba(28,20,14,.72); --line:rgba(255,235,210,.16); --ember:#FF7A3C; }
+  *{box-sizing:border-box}
+  html,body{margin:0; height:100%; background:var(--bg); color:#f4eadc; overflow:hidden; font-family:"Noto Sans KR",system-ui,sans-serif}
+  #app{position:fixed; inset:0}
+  canvas{display:block; touch-action:none}
+  .hud{position:fixed; left:14px; top:12px; z-index:5; max-width:min(420px,72vw); pointer-events:none}
+  .hud .eyebrow{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--ember); font-weight:900}
+  .hud h1{font-family:"Gaegu",cursive; font-size:clamp(22px,4.4vw,34px); margin:2px 0 6px; color:#fff2e2; text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  .hud p{font-size:12.5px; line-height:1.5; color:#e7d6c2; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin:0; backdrop-filter:blur(6px)}
+  .hud p b{color:#ffd9a8}
+  .legend{position:fixed; right:14px; bottom:14px; z-index:5; display:flex; flex-direction:column; gap:5px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:12px; color:#e7d6c2; backdrop-filter:blur(6px)}
+  .legend b{color:#fff2e2}
+  .badge{position:fixed; right:14px; top:12px; z-index:5; background:var(--ember); color:#231107; font-weight:900; font-size:11px; letter-spacing:.04em; padding:5px 11px; border-radius:999px}
+  #loading{position:fixed; inset:0; display:grid; place-items:center; z-index:9; font-family:"Gaegu",cursive; font-size:22px; color:#ffd9a8; background:var(--bg)}
+</style>
+
+<div id="loading">불판 예열 중… 🔥</div>
+<div id="app"></div>
+<div class="hud">
+  <span class="eyebrow">회식 서바이벌 · 3D 방향 샘플</span>
+  <h1>오늘도 굽습니다 🔥</h1>
+  <p>레퍼런스와 같은 <b>각진 3D 카메라</b>로 불판을 내려다봅니다. 음식을 <b>드래그</b>해 옮겨보세요. 건너편은 상사 자리입니다. 음식·사람은 아직 <b>임시 3D 도형</b>이고, 여기에 사실적 3D 애셋을 갈아 끼우면 목표 비주얼이 됩니다.</p>
+</div>
+<div class="badge">임시 지오메트리 · 실제 3D 렌더</div>
+<div class="legend">
+  <div><b>드래그</b> — 음식 옮기기</div>
+  <div><b>휠 / 오른쪽 드래그</b> — 카메라</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.128.0/three.min.js"></script>
+<script>
+const TAU=Math.PI*2;
+const app=document.getElementById('app');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12;
+app.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color('#1a120b');
+scene.fog=new THREE.Fog('#1a120b',22,42);
+
+const camera=new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.1, 100);
+let camAngle=0.0, camDist=13.2, camHeight=8.4;
+function placeCamera(){ camera.position.set(Math.sin(camAngle)*camDist, camHeight, Math.cos(camAngle)*camDist); camera.lookAt(0,0.7,-0.4); }
+placeCamera();
+
+/* ── 조명 ── */
+scene.add(new THREE.HemisphereLight(0xfff0e0, 0x2a1c12, 0.55));
+const key=new THREE.DirectionalLight(0xfff2d6, 1.25);
+key.position.set(6,12,7); key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.near=1; key.shadow.camera.far=40;
+key.shadow.camera.left=-10; key.shadow.camera.right=10; key.shadow.camera.top=10; key.shadow.camera.bottom=-10;
+key.shadow.bias=-0.0004; key.shadow.radius=4;
+scene.add(key);
+const fill=new THREE.DirectionalLight(0xffb27a, 0.35); fill.position.set(-7,5,-4); scene.add(fill);
+const ember=new THREE.PointLight(0xff6a2a, 0.9, 12, 2); ember.position.set(0,0.6,-0.3); scene.add(ember);
+
+/* ── 캔버스 텍스처: 나무결 ── */
+function woodTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=512; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,512,512); g.addColorStop(0,'#8a5a33'); g.addColorStop(1,'#6e441f'); x.fillStyle=g; x.fillRect(0,0,512,512);
+  for(let i=0;i<70;i++){ x.strokeStyle=`rgba(60,35,15,${0.05+Math.random()*0.12})`; x.lineWidth=1+Math.random()*2.5; x.beginPath();
+    const y=Math.random()*512; x.moveTo(0,y);
+    for(let px=0;px<=512;px+=16){ x.lineTo(px, y+Math.sin(px*0.03+i)*7+ (Math.random()*4-2)); } x.stroke(); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3,3); t.anisotropy=4; return t;
+}
+function steamTexture(){
+  const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d');
+  const g=x.createRadialGradient(32,32,0,32,32,32); g.addColorStop(0,'rgba(255,255,255,.8)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,64); return new THREE.CanvasTexture(c);
+}
+
+/* ── 테이블 ── */
+const table=new THREE.Mesh(new THREE.BoxGeometry(30,1,22), new THREE.MeshStandardMaterial({map:woodTexture(), roughness:0.82, metalness:0.02}));
+table.position.y=-0.5; table.receiveShadow=true; scene.add(table);
+
+/* ── 불판 ── */
+const grill=new THREE.Group(); scene.add(grill);
+const grillMat=new THREE.MeshStandardMaterial({color:0x2a231d, roughness:0.5, metalness:0.55});
+const body=new THREE.Mesh(new THREE.BoxGeometry(7.2,1.2,7.2), grillMat); body.position.y=0.6; body.castShadow=true; body.receiveShadow=true; grill.add(body);
+const top=new THREE.Mesh(new THREE.BoxGeometry(7.4,0.18,7.4), new THREE.MeshStandardMaterial({color:0x1b1611, roughness:0.42, metalness:0.6}));
+top.position.y=1.24; top.receiveShadow=true; grill.add(top);
+// 둥근 홈(레퍼런스의 원형 슬롯)
+const wellMat=new THREE.MeshStandardMaterial({color:0x0e0b08, roughness:0.35, metalness:0.7});
+const wellGeo=new THREE.CylinderGeometry(0.72,0.72,0.1,28);
+const wells=[]; const N=4, gap=1.62, off=(N-1)*gap/2;
+for(let i=0;i<N;i++)for(let j=0;j<N;j++){ const w=new THREE.Mesh(wellGeo,wellMat); w.position.set(-off+i*gap,1.3,-off+j*gap); w.receiveShadow=true; grill.add(w); wells.push([w.position.x,w.position.z]); }
+
+/* ── 음식 (임시 3D 도형) ── */
+const foods=[]; const steamGroup=new THREE.Group(); scene.add(steamGroup); const steamTex=steamTexture();
+function addSteam(x,z){
+  for(let k=0;k<2;k++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:steamTex, transparent:true, opacity:0.0, depthWrite:false, blending:THREE.AdditiveBlending, color:0xffe9cf}));
+    s.position.set(x+(Math.random()-.5)*0.5,1.5+Math.random(),z+(Math.random()-.5)*0.5); s.scale.setScalar(1.1+Math.random());
+    s.userData={base:z, x, z, sp:0.006+Math.random()*0.01, ph:Math.random()*TAU, y0:1.4+Math.random()*0.6}; steamGroup.add(s); }
+}
+function meat(){ const g=new THREE.Group();
+  const m=new THREE.Mesh(new THREE.BoxGeometry(1.05,0.32,0.82), new THREE.MeshStandardMaterial({color:0x8a4a2c, roughness:0.62, metalness:0.05}));
+  m.castShadow=true; g.add(m);
+  const fat=new THREE.Mesh(new THREE.BoxGeometry(1.06,0.12,0.24), new THREE.MeshStandardMaterial({color:0xe9d3b0, roughness:0.7})); fat.position.set(0,0.02,0.3); fat.castShadow=true; g.add(fat);
+  return g; }
+function cucumber(){ const g=new THREE.Group();
+  const skin=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.16,24), new THREE.MeshStandardMaterial({color:0x3f7a34, roughness:0.5})); skin.castShadow=true; g.add(skin);
+  const flesh=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.17,24), new THREE.MeshStandardMaterial({color:0xcfe6b0, roughness:0.55})); g.add(flesh);
+  return g; }
+function sausage(){ const m=new THREE.Mesh(new THREE.CapsuleGeometry(0.28,0.7,6,14), new THREE.MeshStandardMaterial({color:0x7a3f22, roughness:0.5, metalness:0.05})); m.rotation.z=Math.PI/2; m.castShadow=true; const g=new THREE.Group(); g.add(m); return g; }
+function ball(){ const m=new THREE.Mesh(new THREE.SphereGeometry(0.5,24,18), new THREE.MeshStandardMaterial({color:0xd98a3a, roughness:0.72})); m.castShadow=true; const g=new THREE.Group(); g.add(m); return g; }
+function cheese(){ const m=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.28,0.6), new THREE.MeshStandardMaterial({color:0xf2c94c, roughness:0.5})); m.castShadow=true; const g=new THREE.Group(); g.add(m); return g; }
+const MAKERS=[meat,meat,cucumber,sausage,ball,cheese,meat,cucumber];
+const usedWells=[...wells].sort(()=>Math.random()-0.5).slice(0,8);
+MAKERS.forEach((mk,i)=>{ const f=mk(); const [x,z]=usedWells[i]; f.position.set(x,1.42,z); f.rotation.y=Math.random()*TAU;
+  f.userData={x,z}; scene.add(f); foods.push(f); if(mk===meat||mk===sausage||mk===ball) addSteam(x,z); });
+
+/* ── 젓가락 커서 ── */
+const chopsticks=new THREE.Group();
+const stickMat=new THREE.MeshStandardMaterial({color:0xcaa06a, roughness:0.6});
+for(let i=0;i<2;i++){ const s=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.06,2.4,10), stickMat); s.rotation.x=Math.PI*0.5; s.position.set(i?0.16:-0.16,0,0); s.castShadow=true; chopsticks.add(s); }
+chopsticks.rotation.set(-0.7,0.3,0); chopsticks.position.set(0,3,2); scene.add(chopsticks);
+
+/* ── 상사 자리(임시) ── */
+function nameTag(text){
+  const c=document.createElement('canvas'); c.width=256; c.height=72; const x=c.getContext('2d');
+  x.fillStyle='rgba(20,14,8,.86)'; roundRect(x,8,14,240,44,12); x.fill();
+  x.font='bold 30px "Noto Sans KR",sans-serif'; x.fillStyle='#ffe9cf'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,128,38);
+  const t=new THREE.CanvasTexture(c); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t, transparent:true, depthWrite:false})); sp.scale.set(2.1,0.6,1); return sp;
+}
+function roundRect(x,a,b,w,h,r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r); x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); }
+const BOSS=[['오상무',0xb9a48c],['김부장',0xa8b0bd],['이차장',0xc0a6a0],['박대리',0xa9b59a]];
+BOSS.forEach((b,i)=>{ const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CapsuleGeometry(0.62,1.0,6,14), new THREE.MeshStandardMaterial({color:b[1], roughness:0.7})); body.position.y=1.35; body.castShadow=true; g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.5,20,16), new THREE.MeshStandardMaterial({color:0xd8b48c, roughness:0.6})); head.position.y=2.5; head.castShadow=true; g.add(head);
+  const tag=nameTag(b[0]); tag.position.set(0,3.4,0); g.add(tag);
+  g.position.set(-4.2+i*2.8, 0, -6.2); scene.add(g);
+});
+// 안내판: "여기에 실사 3D 인물"
+const guide=nameTag('← 실사 3D 인물이 들어갈 자리 →'); guide.scale.set(5.2,0.62,1); guide.position.set(0,4.6,-6.2); scene.add(guide);
+
+/* ── 드래그 ── */
+const ray=new THREE.Raycaster(); const ptr=new THREE.Vector2(); let dragging=null; const dragPlane=new THREE.Plane(new THREE.Vector3(0,1,0), -1.42); const hit=new THREE.Vector3();
+let orbit=null;
+function setPtr(e){ ptr.x=(e.clientX/innerWidth)*2-1; ptr.y=-(e.clientY/innerHeight)*2+1; }
+renderer.domElement.addEventListener('pointerdown', e=>{ setPtr(e);
+  if(e.button===2){ orbit={x:e.clientX, a:camAngle}; return; }
+  ray.setFromCamera(ptr,camera); const hits=ray.intersectObjects(foods,true);
+  if(hits.length){ let o=hits[0].object; while(o.parent && !foods.includes(o)) o=o.parent; dragging=o; }
+});
+window.addEventListener('pointermove', e=>{ setPtr(e);
+  if(orbit){ camAngle=orbit.a+(e.clientX-orbit.x)*0.005; placeCamera(); return; }
+  ray.setFromCamera(ptr,camera);
+  if(dragging){ ray.ray.intersectPlane(dragPlane,hit); dragging.position.x=Math.max(-3.4,Math.min(3.4,hit.x)); dragging.position.z=Math.max(-3.4,Math.min(3.4,hit.z)); dragging.position.y=1.75; }
+  else { ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-2), hit); chopsticks.position.lerp(new THREE.Vector3(hit.x,2.6,hit.z+0.4),0.4); }
+});
+window.addEventListener('pointerup', ()=>{ if(dragging) dragging.position.y=1.42; dragging=null; orbit=null; });
+renderer.domElement.addEventListener('contextmenu', e=>e.preventDefault());
+renderer.domElement.addEventListener('wheel', e=>{ camDist=Math.max(8,Math.min(20,camDist+e.deltaY*0.01)); camHeight=camDist*0.64; placeCamera(); }, {passive:true});
+
+/* ── 루프 ── */
+let t=0;
+function animate(){ requestAnimationFrame(animate); t+=0.016;
+  ember.intensity=0.75+Math.sin(t*7)*0.18;   // 불빛 일렁임
+  steamGroup.children.forEach(s=>{ s.position.y+=s.userData.sp*10*0.016*8; s.position.x=s.userData.x+Math.sin(t+s.userData.ph)*0.25;
+    const life=(s.position.y-s.userData.y0)/2.6; s.material.opacity=Math.max(0,0.5*(1-life)); s.scale.setScalar(1.0+life*1.6);
+    if(life>=1){ s.position.y=s.userData.y0; } });
+  renderer.render(scene,camera);
+}
+animate();
+document.getElementById('loading').style.display='none';
+addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+</script>
